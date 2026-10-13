@@ -75,3 +75,24 @@ for (let n = 0; n < N; n++) {
     }
   }
 }
+
+// axios InterceptorManager: object with a 'handlers' array; label (request/response) comes from the incoming property edge
+const label = new Map()
+for (let e = 0; e < edges.length / EF; e++) {
+  if (eType[edges[e * EF + eiType]] !== 'property') continue
+  const nm = strings[edges[e * EF + eiName]]
+  if (nm === 'request' || nm === 'response') label.set(edges[e * EF + eiTo] / NF, nm)
+}
+const mgrs = []
+for (let n = 0; n < N; n++) {
+  if (nType[nodes[n * NF + iType]] !== 'object') continue
+  const h = prop(n, 'handlers')
+  if (h < 0 || nodeName(h) !== 'object:Array') continue
+  let live = 0
+  for (let k = first[h]; k < first[h + 1]; k++) {
+    if (eType[edges[k * EF + eiType]] !== 'element') continue
+    if (nType[nodes[(edges[k * EF + eiTo] / NF) * NF + iType]] === 'object') live++
+  }
+  if (live) mgrs.push({ node: n, kind: label.get(n) || '?', live })
+}
+console.log('axios interceptor managers with live handlers:', mgrs.sort((a, b) => b.live - a.live).slice(0, 6))

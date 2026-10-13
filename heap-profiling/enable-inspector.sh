@@ -4,7 +4,7 @@
 # Also copies the helper scripts to /tmp inside the container.
 C="${1:-manager-front-app-1}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
-for f in main-heap.mjs main-memory.mjs main-sampling.mjs worker-inspect.mjs; do
+for f in main-heap.mjs main-memory.mjs main-sampling.mjs worker-inspect.mjs cpu-profile.mjs; do
   docker cp "$DIR/$f" "$C:/tmp/$f"
 done
 # host PIDs from `docker top` differ from in-container PIDs, so scan /proc inside the container

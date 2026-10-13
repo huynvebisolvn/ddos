@@ -24,6 +24,8 @@ Kết quả chi tiết ở cuối file.
 | `worker-inspect.mjs` | container | Như trên nhưng cho **SSR worker**: `mem` / `samp <giây>` / `snap` (ghi `/tmp/w.heapsnapshot`) |
 | `analyze-snapshot.mjs` | host | Phân tích `.heapsnapshot`: đếm `vue-router` còn sống, in retaining path từ GC root, dump stack warning của Vue |
 | `instrument-vue-ssr.cjs` | container | Patch tạm Vue SSR để log mọi lỗi SSR bị nuốt (`LEAKDBG`) |
+| `cpu-profile.mjs` | container | `main\|worker <giây>`: CPU profile (CDP `Profiler`) của main thread hoặc SSR worker, ghi `/tmp/<target>.cpuprofile` và in top self-time |
+| `analyze-cpuprofile.mjs` | host | `<file> [topN] [regex]`: xếp hạng theo inclusive time (self + hàm con) từ `.cpuprofile` |
 
 Tải tạo leak: `scripts/selenium/login_session_test.py` (docstring đầu file mô tả các biến môi trường). Cần
 `MANAGER_FRONT_PASSWORD`; chạy bằng `.venv/bin/python -u`.
@@ -63,6 +65,16 @@ Lưu ý khi chạy: mỗi bước tải mất vài phút (ghi rõ bên dưới).
    (lần đăng nhập Selenium đầu tiên khi cold start có thể thất bại, chạy lại), lặp lại bước 1.
 
 Gotcha của inspector: `HeapProfiler.getSamplingHeapProfile` không tồn tại ở Node này, profile được trả về bởi `stopSampling`.
+
+## Điều tra CPU
+
+Sau `enable-inspector.sh`, chạy profiler (dài hơn tải ~30 giây vì pha login không spam) cùng lúc với tải, mỗi target một lần:
+```sh
+(docker exec manager-front-app-1 node /tmp/cpu-profile.mjs worker 170 > /tmp/cpu-worker.out 2>&1 &)
+TEST_DURATION_SECONDS=140 NUM_INSTANCES=4 TABS_PER_INSTANCE=5 selenium/.venv/bin/python -u selenium/login_session_test.py
+docker cp manager-front-app-1:/tmp/worker.cpuprofile /tmp/ && node heap-profiling/analyze-cpuprofile.mjs /tmp/worker.cpuprofile 40
+```
+Lặp lại với `main`; đợi profiler trước chạy xong (file `.cpuprofile` xuất hiện) rồi mới chạy cái sau. `.cpuprofile` mở được bằng Chrome DevTools (Performance) hoặc speedscope.
 
 ## Kết quả điều tra 2026-10-12
 

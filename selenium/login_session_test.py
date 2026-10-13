@@ -127,8 +127,6 @@ TARGET_PATHS = os.environ.get(
             "/masters/organizes/initial-setup/shop",
             "/masters/support-groups/initial-setup/shop",
             "/initial-setup/shop/masters",
-            # ダッシュボード
-            "/dashboard",
             # 管理者機能
             "/system/users/general-users",
             "/system/users/shared-users",
